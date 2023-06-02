@@ -9,4 +9,4 @@ dependencyResolutionManagement {
 include(":app")
 include(":dummy")
 
-rootProject.name = "revanced-integrations"
+rootProject.name = "revanced-integrations-A6"
