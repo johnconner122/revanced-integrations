@@ -5,7 +5,6 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -16,177 +15,100 @@ import app.revanced.integrations.settings.SettingsEnum;
 import app.revanced.integrations.utils.LogHelper;
 import app.revanced.integrations.utils.ReVancedUtils;
 
-abstract class FilterGroup<T> {
-    final static class FilterGroupResult {
-        private final boolean filtered;
+class BlockRule {
+    final static class BlockResult {
+        private final boolean blocked;
         private final SettingsEnum setting;
 
-        public FilterGroupResult(final SettingsEnum setting, final boolean filtered) {
+        public BlockResult(final SettingsEnum setting, final boolean blocked) {
             this.setting = setting;
-            this.filtered = filtered;
+            this.blocked = blocked;
         }
 
         public SettingsEnum getSetting() {
             return setting;
         }
 
-        public boolean isFiltered() {
-            return filtered;
+        public boolean isBlocked() {
+            return blocked;
         }
     }
 
     protected final SettingsEnum setting;
-    protected final T[] filters;
+    private final String[] blocks;
 
     /**
-     * Initialize a new filter group.
+     * Initialize a new rule for components.
      *
-     * @param setting The associated setting.
-     * @param filters The filters.
+     * @param setting The setting which controls the blocking of this component.
+     * @param blocks  The rules to block the component on.
      */
-    @SafeVarargs
-    public FilterGroup(final SettingsEnum setting, final T... filters) {
+    public BlockRule(final SettingsEnum setting, final String... blocks) {
         this.setting = setting;
-        this.filters = filters;
+        this.blocks = blocks;
     }
 
     public boolean isEnabled() {
         return setting.getBoolean();
     }
 
-    public abstract FilterGroupResult check(final T stack);
-}
-
-class StringFilterGroup extends FilterGroup<String> {
-
-    /**
-     * {@link FilterGroup#FilterGroup(SettingsEnum, Object[])}
-     */
-    public StringFilterGroup(final SettingsEnum setting, final String... filters) {
-        super(setting, filters);
-    }
-
-    @Override
-    public FilterGroupResult check(final String string) {
-        return new FilterGroupResult(setting, string != null && ReVancedUtils.containsAny(string, filters));
+    public BlockResult check(final String string) {
+        return new BlockResult(setting, string != null && ReVancedUtils.containsAny(string, blocks));
     }
 }
 
-final class CustomFilterGroup extends StringFilterGroup {
-
+final class CustomBlockRule extends BlockRule {
     /**
-     * {@link FilterGroup#FilterGroup(SettingsEnum, Object[])}
+     * Initialize a new rule for components.
+     *
+     * @param setting The setting which controls the blocking of the components.
+     * @param filter  The setting which contains the list of component names.
      */
-    public CustomFilterGroup(final SettingsEnum setting, final SettingsEnum filter) {
+    public CustomBlockRule(final SettingsEnum setting, final SettingsEnum filter) {
         super(setting, filter.getString().split(","));
     }
 }
 
-class ByteArrayFilterGroup extends FilterGroup<byte[]> {
-    // Modified implementation from https://stackoverflow.com/a/1507813
-    private int indexOf(final byte[] data, final byte[] pattern) {
-        // Computes the failure function using a boot-strapping process,
-        // where the pattern is matched against itself.
 
-        final int[] failure = new int[pattern.length];
+abstract class Filter {
+    final protected LithoBlockRegister pathRegister = new LithoBlockRegister();
+    final protected LithoBlockRegister identifierRegister = new LithoBlockRegister();
 
-        int j = 0;
-        for (int i = 1; i < pattern.length; i++) {
-            while (j > 0 && pattern[j] != pattern[i]) {
-                j = failure[j - 1];
-            }
-            if (pattern[j] == pattern[i]) {
-                j++;
-            }
-            failure[i] = j;
-        }
-
-        // Finds the first occurrence of the pattern in the byte array using
-        // KMP matching algorithm.
-
-        j = 0;
-        if (data.length == 0) return -1;
-
-        for (int i = 0; i < data.length; i++) {
-            while (j > 0 && pattern[j] != data[i]) {
-                j = failure[j - 1];
-            }
-            if (pattern[j] == data[i]) {
-                j++;
-            }
-            if (j == pattern.length) {
-                return i - pattern.length + 1;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * {@link FilterGroup#FilterGroup(SettingsEnum, Object[])}
-     */
-    public ByteArrayFilterGroup(final SettingsEnum setting, final byte[]... filters) {
-        super(setting, filters);
-    }
-
-    @Override
-    public FilterGroupResult check(final byte[] bytes) {
-        var matched = false;
-        for (byte[] filter : filters) {
-            if (indexOf(bytes, filter) == -1) continue;
-
-            matched = true;
-            break;
-        }
-
-        final var filtered = matched;
-        return new FilterGroupResult(setting, filtered);
-    }
+    abstract boolean filter(final String path, final String identifier);
 }
 
-final class ByteArrayAsStringFilterGroup extends ByteArrayFilterGroup {
+final class LithoBlockRegister implements Iterable<BlockRule> {
+    private final ArrayList<BlockRule> blocks = new ArrayList<>();
 
-    /**
-     * {@link ByteArrayFilterGroup#ByteArrayFilterGroup(SettingsEnum, byte[]...)}
-     */
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    public ByteArrayAsStringFilterGroup(SettingsEnum setting, String... filters) {
-        super(setting, Arrays.stream(filters).map(String::getBytes).toArray(byte[][]::new));
-    }
-}
-
-abstract class FilterGroupList<V, T extends FilterGroup<V>> implements Iterable<T> {
-    private final ArrayList<T> filterGroups = new ArrayList<>();
-
-    @SafeVarargs
-    protected final void addAll(final T... filterGroups) {
-        this.filterGroups.addAll(Arrays.asList(filterGroups));
+    public void registerAll(BlockRule... blocks) {
+        this.blocks.addAll(Arrays.asList(blocks));
     }
 
     @NonNull
     @Override
-    public Iterator<T> iterator() {
-        return filterGroups.iterator();
+    public Iterator<BlockRule> iterator() {
+        return blocks.iterator();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
-    public void forEach(@NonNull Consumer<? super T> action) {
-        filterGroups.forEach(action);
+    public void forEach(@NonNull Consumer<? super BlockRule> action) {
+        blocks.forEach(action);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @NonNull
     @Override
-    public Spliterator<T> spliterator() {
-        return filterGroups.spliterator();
+    public Spliterator<BlockRule> spliterator() {
+        return blocks.spliterator();
     }
 
-    protected boolean contains(final V stack) {
-        for (T filterGroup : this) {
-            if (!filterGroup.isEnabled()) continue;
+    public boolean contains(String path) {
+        for (var rule : this) {
+            if (!rule.isEnabled()) continue;
 
-            var result = filterGroup.check(stack);
-            if (result.isFiltered()) {
+            var result = rule.check(path);
+            if (result.isBlocked()) {
                 return true;
             }
         }
@@ -195,69 +117,24 @@ abstract class FilterGroupList<V, T extends FilterGroup<V>> implements Iterable<
     }
 }
 
-final class StringFilterGroupList extends FilterGroupList<String, StringFilterGroup> {
-}
-
-final class ByteArrayFilterGroupList extends FilterGroupList<byte[], ByteArrayFilterGroup> {
-}
-
-abstract class Filter {
-    final protected StringFilterGroupList pathFilterGroups = new StringFilterGroupList();
-    final protected StringFilterGroupList identifierFilterGroups = new StringFilterGroupList();
-    final protected ByteArrayFilterGroupList protobufBufferFilterGroups = new ByteArrayFilterGroupList();
-
-    /**
-     * Check if the given path, identifier or protobuf buffer is filtered by any {@link FilterGroup}.
-     *
-     * @return True if filtered, false otherwise.
-     */
-    boolean isFiltered(final String path, final String identifier, final byte[] protobufBufferArray) {
-        if (pathFilterGroups.contains(path)) {
-            LogHelper.printDebug(() -> String.format("Filtered path: %s", path));
-            return true;
-        }
-
-        if (identifierFilterGroups.contains(identifier)) {
-            LogHelper.printDebug(() -> String.format("Filtered identifier: %s", identifier));
-            return true;
-        }
-
-        if (protobufBufferFilterGroups.contains(protobufBufferArray)) {
-            LogHelper.printDebug(() -> "Filtered from protobuf-buffer");
-            return true;
-        }
-
-        return false;
-    }
-}
-
-@RequiresApi(api = Build.VERSION_CODES.N)
-@SuppressWarnings("unused")
 public final class LithoFilterPatch {
     private static final Filter[] filters = new Filter[]{
-            new AdsFilter(),
-            new ButtonsFilter(),
-            new CommentsFilter(),
-            new ShortsFilter()
+            new GeneralAdsPatch(),
+            new ButtonsPatch(),
+            new CommentsPatch(),
     };
 
-    @SuppressWarnings("unused")
-    public static boolean filter(final StringBuilder pathBuilder, final String identifier, final ByteBuffer protobufBuffer) {
+    public static boolean filter(final StringBuilder pathBuilder, final String identifier) {
         var path = pathBuilder.toString();
-        // It is assumed that protobufBuffer is empty as well in this case.
         if (path.isEmpty()) return false;
 
-        LogHelper.printDebug(() -> String.format(
-                "Searching (ID: %s, Buffer-size: %s): %s",
-                identifier, protobufBuffer.remaining(), path
-        ));
+        LogHelper.printDebug(() -> String.format("Searching (ID: %s): %s", identifier, path));
 
-        var protobufBufferArray = protobufBuffer.array();
-
-        // check if any filter-group
-        for (var filter : filters)
-            if (filter.isFiltered(path, identifier, protobufBufferArray)) return true;
+        for (var filter : filters) {
+            if (filter.filter(path, identifier)) return true;
+        }
 
         return false;
     }
 }
+
