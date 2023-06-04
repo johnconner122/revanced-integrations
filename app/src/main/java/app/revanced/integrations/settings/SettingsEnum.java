@@ -87,6 +87,8 @@ public enum SettingsEnum {
     HIDE_RELATED_VIDEOS("revanced_hide_related_videos", BOOLEAN, FALSE),
 
     // Action buttons
+    HIDE_LIKE_BUTTON("revanced_hide_like_button", BOOLEAN, FALSE),
+    HIDE_DISLIKE_BUTTON("revanced_hide_dislike_button", BOOLEAN, FALSE),
     HIDE_LIKE_DISLIKE_BUTTON("revanced_hide_like_dislike_button", BOOLEAN, FALSE),
     HIDE_DOWNLOAD_BUTTON("revanced_hide_download_button", BOOLEAN, FALSE),
     HIDE_PLAYLIST_BUTTON("revanced_hide_playlist_button", BOOLEAN, FALSE),
@@ -114,7 +116,7 @@ public enum SettingsEnum {
     HIDE_LOAD_MORE_BUTTON("revanced_hide_load_more_button", BOOLEAN, TRUE, true),
     HIDE_PLAYER_BUTTONS("revanced_hide_player_buttons", BOOLEAN, FALSE),
     HIDE_PLAYER_OVERLAY("revanced_hide_player_overlay", BOOLEAN, FALSE, true),
-    HIDE_PREVIEW_COMMENT("revanced_hide_preview_comment", BOOLEAN, FALSE, true),
+    HIDE_PREVIEW_COMMENT("revanced_hide_preview_comment", BOOLEAN, FALSE),
     HIDE_SEEKBAR("revanced_hide_seekbar", BOOLEAN, FALSE, true),
     HIDE_SEEKBAR_THUMBNAIL("revanced_hide_seekbar_thumbnail", BOOLEAN, FALSE, true),
     HIDE_HOME_BUTTON("revanced_hide_home_button", BOOLEAN, FALSE, true),

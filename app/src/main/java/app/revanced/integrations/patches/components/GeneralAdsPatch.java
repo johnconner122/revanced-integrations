@@ -155,6 +155,7 @@ public final class GeneralAdsPatch extends Filter {
                 "_ad_with",
                 "landscape_image_wide_button_layout"
         );
+
         var generalAds = new BlockRule(
                 SettingsEnum.HIDE_GENERAL_ADS,
                 "ads_video_with_context",
@@ -212,8 +213,6 @@ public final class GeneralAdsPatch extends Filter {
                 "carousel_ad"
         );
 
-        final var currentPlayerType = PlayerType.getCurrent();
-
         var shorts = new BlockRule(SettingsEnum.HIDE_SHORTS,
                 "reels_player_overlay",
                 "shorts_shelf",
@@ -232,10 +231,10 @@ public final class GeneralAdsPatch extends Filter {
                 "suggested_action"
         );
 
-        final var subscribeButton = new BlockRule(
-                SettingsEnum.HIDE_SHORTS_SUBSCRIBE_BUTTON,
-                "subscribe_button"
-        );
+//        final var subscribeButton = new BlockRule(
+//                SettingsEnum.HIDE_SHORTS_SUBSCRIBE_BUTTON,
+//                "subscribe_button"
+//        );
 
         final var joinButton = new BlockRule(
                 SettingsEnum.HIDE_SHORTS_JOIN_BUTTON,
@@ -256,7 +255,7 @@ public final class GeneralAdsPatch extends Filter {
                 shorts,
                 shortsInfoPanel,
                 thanksButton,
-                subscribeButton,
+               // subscribeButton,
                 joinButton,
                 soundButton,
                 shortsChannelBar,
