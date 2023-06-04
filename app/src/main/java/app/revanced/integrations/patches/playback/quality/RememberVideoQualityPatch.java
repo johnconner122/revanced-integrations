@@ -17,37 +17,27 @@ import app.revanced.integrations.utils.ReVancedUtils;
 public class RememberVideoQualityPatch {
 
     public static int AUTOMATIC_VIDEO_QUALITY_VALUE = -2;
-
     private static final SettingsEnum wifiQualitySetting = SettingsEnum.VIDEO_QUALITY_DEFAULT_WIFI;
     private static final SettingsEnum mobileQualitySetting = SettingsEnum.VIDEO_QUALITY_DEFAULT_MOBILE;
     private static Boolean newVideo = false;
     private static Boolean userChangedQuality = false;
+    private static final ReVancedUtils.NetworkType networkType = ReVancedUtils.getNetworkType();
 
-    public static void changeDefaultQuality(int defaultQuality) {
-        Context context = ReVancedUtils.getContext();
-        if (isConnectedWifi(context)) {
-            try {
-                wifiQualitySetting.saveValue(defaultQuality);
-            } catch (Exception ex) {
-                LogHelper.printException(() -> "Failed to change default WI-FI quality:" + ex);
-                Toast.makeText(context, "Failed to change default WI-FI quality:", Toast.LENGTH_SHORT).show();
-            }
-            LogHelper.printDebug(() -> "Changing default Wi-Fi quality to: " + defaultQuality);
-            Toast.makeText(context, "Changing default Wi-Fi quality to: " + defaultQuality, Toast.LENGTH_SHORT).show();
-        } else if (isConnectedMobile(context)) {
-            try {
-                mobileQualitySetting.saveValue(defaultQuality);
-            } catch (Exception ex) {
-                LogHelper.printDebug(() -> "Failed to change default mobile data quality" + ex);
-                Toast.makeText(context, "Failed to change default mobile data quality", Toast.LENGTH_SHORT).show();
-            }
-            LogHelper.printDebug(() -> "Changing default mobile data quality to:" + defaultQuality);
-            Toast.makeText(context, "Changing default mobile data quality to:" + defaultQuality, Toast.LENGTH_SHORT).show();
-        } else {
-            LogHelper.printDebug(() ->  "No internet connection.");
-            Toast.makeText(context, "No internet connection.", Toast.LENGTH_SHORT).show();
+    private static void changeDefaultQuality(int defaultQuality) {
+        if (networkType == ReVancedUtils.NetworkType.NONE) {
+            ReVancedUtils.showToastShort("No internet connection");
+            return;
         }
-        userChangedQuality = false;
+        String networkTypeMessage;
+        if (networkType == ReVancedUtils.NetworkType.MOBILE) {
+            mobileQualitySetting.saveValue(defaultQuality);
+            networkTypeMessage = "mobile";
+        } else {
+            wifiQualitySetting.saveValue(defaultQuality);
+            networkTypeMessage = "Wi-Fi";
+        }
+        ReVancedUtils.showToastShort("Changed default " + networkTypeMessage
+                + " quality to: " + defaultQuality + "p");
     }
 
     public static int setVideoQuality(Object[] qualities, int quality, Object qInterface, String qIndexMethod) {
@@ -94,15 +84,16 @@ public class RememberVideoQualityPatch {
             LogHelper.printException(() -> "Context is null or settings not initialized, returning quality: " + finalQuality2);
             return quality;
         }
-        if (isConnectedWifi(context)) {
-            preferredQuality = wifiQualitySetting.getInt();
-            LogHelper.printDebug(() -> "Wi-Fi connection detected, preferred quality: " + preferredQuality);
-        } else if (isConnectedMobile(context)) {
-            preferredQuality = mobileQualitySetting.getInt();
-            LogHelper.printDebug(() -> "Mobile data connection detected, preferred quality: " + preferredQuality);
-        } else {
+        if (networkType == ReVancedUtils.NetworkType.NONE) {
             LogHelper.printDebug(() -> "No Internet connection!");
             return quality;
+        }
+        else if (networkType == ReVancedUtils.NetworkType.MOBILE) {
+            preferredQuality = mobileQualitySetting.getInt();
+            LogHelper.printDebug(() -> "Mobile connection detected, preferred quality: " + preferredQuality);
+        } else {
+            preferredQuality = wifiQualitySetting.getInt();
+            LogHelper.printDebug(() -> "Wi-Fi data connection detected, preferred quality: " + preferredQuality);
         }
         if (preferredQuality == -2) {
             return quality;
@@ -139,8 +130,8 @@ public class RememberVideoQualityPatch {
     }
 
     public static void userChangedQuality(int selectedQuality) {
-        // Do not remember a **new** quality if REMEMBER_VIDEO_QUALITY is true
-        if (SettingsEnum.REMEMBER_VIDEO_QUALITY_LAST_SELECTED.getBoolean()) return;
+        // Do not remember a **new** quality if REMEMBER_VIDEO_QUALITY is false
+        if (!SettingsEnum.REMEMBER_VIDEO_QUALITY_LAST_SELECTED.getBoolean()) return;
 
         AUTOMATIC_VIDEO_QUALITY_VALUE = selectedQuality;
         userChangedQuality = true;
