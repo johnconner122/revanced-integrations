@@ -153,6 +153,7 @@ public final class GeneralAdsPatch extends Filter {
                 "_buttoned_layout",
                 "full_width_square_image_layout",
                 "_ad_with",
+                "video_display_button_group_layout",
                 "landscape_image_wide_button_layout"
         );
 
@@ -181,6 +182,43 @@ public final class GeneralAdsPatch extends Filter {
                 "movie_and_show_upsell_card"
         );
 
+        var carouselAd = new BlockRule(SettingsEnum.HIDE_GENERAL_ADS,
+                "carousel_ad"
+        );
+
+        var shorts = new BlockRule(SettingsEnum.HIDE_SHORTS,
+                "reels_player_overlay",
+                "shorts_shelf",
+                "inline_shorts",
+                "shorts_grid",
+                "shorts_video_cell"
+        );
+
+        final var shortsInfoPanel = new BlockRule(
+                SettingsEnum.HIDE_SHORTS_INFO_PANEL,
+                "shorts_info_panel_overview"
+        );
+
+        final var thanksButton = new BlockRule(
+                SettingsEnum.HIDE_SHORTS_THANKS_BUTTON,
+                "suggested_action"
+        );
+
+        final var joinButton = new BlockRule(
+                SettingsEnum.HIDE_SHORTS_JOIN_BUTTON,
+                "sponsor_button"
+        );
+
+        final var soundButton = new BlockRule(
+                SettingsEnum.HIDE_SHORTS_SOUND_BUTTON,
+                "reel_pivot_button"
+        );
+
+        final var shortsChannelBar = new BlockRule(
+                SettingsEnum.HIDE_SHORTS_CHANNEL_BAR,
+                "reel_channel_bar"
+        );
+
         this.pathRegister.registerAll(
                 generalAds,
                 buttonedAd,
@@ -206,59 +244,16 @@ public final class GeneralAdsPatch extends Filter {
                 webLinkPanel,
                 imageShelf,
                 subscribersCommunityGuidelines,
-                channelMemberShelf
-        );
-
-        var carouselAd = new BlockRule(SettingsEnum.HIDE_GENERAL_ADS,
-                "carousel_ad"
-        );
-
-        var shorts = new BlockRule(SettingsEnum.HIDE_SHORTS,
-                "reels_player_overlay",
-                "shorts_shelf",
-                "inline_shorts",
-                "shorts_grid",
-                "shorts_video"
-        );
-
-        final var shortsInfoPanel = new BlockRule(
-                SettingsEnum.HIDE_SHORTS_INFO_PANEL,
-                "shorts_info_panel_overview"
-        );
-
-        final var thanksButton = new BlockRule(
-                SettingsEnum.HIDE_SHORTS_THANKS_BUTTON,
-                "suggested_action"
-        );
-
-//        final var subscribeButton = new BlockRule(
-//                SettingsEnum.HIDE_SHORTS_SUBSCRIBE_BUTTON,
-//                "subscribe_button"
-//        );
-
-        final var joinButton = new BlockRule(
-                SettingsEnum.HIDE_SHORTS_JOIN_BUTTON,
-                "sponsor_button"
-        );
-
-        final var soundButton = new BlockRule(
-                SettingsEnum.HIDE_SHORTS_SOUND_BUTTON,
-                "reel_pivot_button"
-        );
-
-        final var shortsChannelBar = new BlockRule(
-                SettingsEnum.HIDE_SHORTS_CHANNEL_BAR,
-                "reel_channel_bar"
+                channelMemberShelf,
+                joinButton,
+                soundButton,
+                shortsChannelBar,
+                shortsInfoPanel
         );
 
         this.identifierRegister.registerAll(
                 shorts,
-                shortsInfoPanel,
                 thanksButton,
-               // subscribeButton,
-                joinButton,
-                soundButton,
-                shortsChannelBar,
                 graySeparator,
                 carouselAd
         );
